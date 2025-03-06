@@ -8,8 +8,9 @@ PORT = 65432
 
 WIDTH, HEIGHT = 500, 500
 GRID_SIZE = 20
+WALL_THICKNESS = 5
 
-COLORS = {"snake": (0, 255, 0), "background": (0, 0, 0)}
+COLORS = {"snake": (0, 255, 0), "background": (0, 0, 0), "walls": (100, 0, 0)}
 
 class SnakeGame:
     def __init__(self, client_id):
@@ -47,14 +48,25 @@ class SnakeGame:
         if keys[pygame.K_LEFT]: self.direction = (-GRID_SIZE, 0)
         if keys[pygame.K_RIGHT]: self.direction = (GRID_SIZE, 0)
 
+    def check_collision(self):
+        head = self.snake[0]
+        if head[0] < WALL_THICKNESS or head[0] >= WIDTH - WALL_THICKNESS or head[1] < WALL_THICKNESS or head[1] >= HEIGHT - WALL_THICKNESS:
+            self.running = False
+
     def update(self):
         head = (self.snake[0][0] + self.direction[0], self.snake[0][1] + self.direction[1])
         self.snake.insert(0, head)
         self.snake.pop()
+        self.check_collision()
         self.send_data()
 
     def draw(self):
         self.screen.fill(COLORS["background"])
+        pygame.draw.rect(self.screen, COLORS["walls"], (0, 0, WIDTH, WALL_THICKNESS))
+        pygame.draw.rect(self.screen, COLORS["walls"], (0, HEIGHT - WALL_THICKNESS, WIDTH, WALL_THICKNESS))
+        pygame.draw.rect(self.screen, COLORS["walls"], (0, 0, WALL_THICKNESS, HEIGHT))
+        pygame.draw.rect(self.screen, COLORS["walls"], (WIDTH - WALL_THICKNESS, 0, WALL_THICKNESS, HEIGHT))
+        
         for player, body in self.server_state.get("players", {}).items():
             for segment in body:
                 pygame.draw.rect(self.screen, COLORS["snake"], (*segment, GRID_SIZE, GRID_SIZE))
